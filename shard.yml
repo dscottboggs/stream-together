@@ -1,0 +1,17 @@
+name: stream_together
+version: 0.1.0
+
+authors:
+  - D. Scott Boggs <scott@tams.tech>
+
+targets:
+  stream_together:
+    main: src/stream_together.cr
+
+dependencies:
+  kemal:
+    github: kemalcr/kemal
+
+crystal: 0.27.0
+
+license: MIT

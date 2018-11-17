@@ -1,0 +1,19 @@
+body {
+  font-family: sans-serif;
+  font-size: 1.25em;
+  /* TODO setup global color scheme */
+}
+
+input {
+  border-radius: 15%;
+}
+
+form.watch-link {
+  /* style the form */
+  display: inline-block;
+}
+
+.submit-button {
+  color: #FFF;
+  background-color: #22D;
+}
