@@ -51,9 +51,6 @@ class VideoPlayer {
       src: this.sourceURL,
       // playbackRates: [ 0.5, 0.75, 0.85, 1, 1.15, 1.25, 1.33, 1.5 ],
       // TODO: allow changing synchronized playbackRates, if possible
-      plugins: {
-        eventTracking: true
-      }
     };
   }
 
@@ -83,20 +80,24 @@ class VideoPlayer {
     this.player.on('ready', this.onVideoLoad);
     this.player.on('stalled', this.onPlayerStalled);
   }
-
+  // called when the video has finished loading
   onVideoLoad() {
     if (this.loadStartTime !== null) this.postStats(new Date().getTime() - this.loadStartTime);
     this.sendCommandToServer(Ready);
   }
+  // called when the pause button is clicked
   onPlayerPaused() {
-    this.sendCommandToServer(Pause)
+    this.sendCommandToServer(Pause, this.player.currentTime())
   }
+  // called when the play button is clicked
   onPlayerResumed() {
     this.sendCommandToServer(Play);
   }
+  // called when playing has paused to allow buffering.
   onPlayerStalled(){
     this.sendCommandToServer(Pause, this.player.currentTime());
   }
+  // Called when a command is received from the server.
   onServerCommand(command) {
     switch (command.data) {
       case "play":
@@ -106,7 +107,8 @@ class VideoPlayer {
         console.error(`unknown command from server ${command.data}`);
     }
   }
-  sendCommandToServer(command) {
+  // send the given command to the server, with an optional payload.
+  sendCommandToServer(command, payload) {
     if( this.socket.readyState !== WebSocket.OPEN) throw new SocketNotReady(this.socket);
     switch (command) {
       case Play:

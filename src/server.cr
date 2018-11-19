@@ -19,6 +19,11 @@ require "kemal"
 module StreamTogether
   class Server
     PWD = "/home/scott/Documents/code/stream_together"
+    TIMEOUT_PERIOD = 15.seconds
+    property sessions = {} of String => Array(Session)
+    property not_yet_joined = [] of WebSocket
+    private property flash_messages = [] of String
+
     def initialize(@ip="0.0.0.0", @port=80, @public_folder = nil)
       Kemal.config.host_binding = @ip
       Kemal.config.port = @port
@@ -29,8 +34,8 @@ module StreamTogether
     end
     def serve_up
       Kemal.run do
-        ws "/" { |env| command env }
-        get "/vid" { |env| render_video_page env }
+        ws "/" { |sock, ctx| command sock, ctx }
+        get "/vid" { |ctx| render_video_page ctx }
         get "/" { render_page "index.html" }
       end
     end
@@ -42,14 +47,77 @@ module StreamTogether
     end
 
     # Receive a video URL in a Form, and render a video pulled from that URL.
-    def render_video_page(env)
-
+    def render_video_page(context)
+      _url = context.params.body["link"]?
+      if (url = _url).nil?
+        flash "No URL received"
+        context.redirect "/"
+      end
     end
 
     # open a command/control environment with the client player
-    def command(env)
+    def command(socket, context)
       # TODO: implement
       raise "not yet implemented"
+      this_session : Session? = nil
+      not_yet_joined << socket
+      (sockets << socket).on_message do |msg|
+        case (message = Message.from_json msg).command
+        when Commands::Join
+          sessions[message.source] << (this_session = Session.new socket, message.source)
+          not_yet_joined.delete socket
+          this_session.load
+        when Commands::Ready
+          if (sesh = this_session).nil?
+            halt context,
+                 status_code: 400,
+                 response: "must join and play before indicating ready"
+          else
+            sesh.is_ready
+            if sessions[message.source].all? &.ready?
+              sessions[message.source].each do |session|
+                session.play
+              end
+            else
+              timeout session
+            end
+          end
+        when Commands::Play
+          if (sesh = this_session).nil?
+            halt context,
+                 status_code: 400,
+                 response: "must join before playing"
+          elsif sesh.ready?
+
+          else
+
+          end
+        when Commands::Pause
+          halt(
+            context,
+            status_code: 400,
+            response: "must join and be ready to begin playing"
+          ) unless this_session && this_session.ready?
+        else
+          raise UnknownCommandError.new message
+        end
+      end
+
+    rescue err : UnknownCommandError
+      raise if DEBUG
+      halt context, status_code: 400, response: "Received unknown command "
+    end
+
+    # TODO display flash messages
+    def flash(msg)
+      flash_messages << msg
+    end
+
+    private def timeout(session)
+      spawn do
+        sleep TIMEOUT_PERIOD
+        session.give_up! unless sessions[session.source].all? &.playing?
+      end
     end
 
     # render a given page relative to the "views" directory.
