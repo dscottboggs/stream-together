@@ -49,5 +49,17 @@ module StreamTogether
     def give_up!
       socket.send ReplyMessage.give_up! source
     end
+
+    def pause(at : Time::Span? = nil)
+      socket.send ReplyMessage.pause(source, timestamp: at)
+    end
+
+    def acknowledge
+      socket.send ReplyMessage.acknowledge source
+    end
+
+    def load(at : Time::Span? = nil)
+      socket.send ReplyMessage.load source, timestamp: at
+    end
   end
 end

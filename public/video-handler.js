@@ -2,6 +2,7 @@ const Play = new Symbol("play the video");
 const Pause = new Symbol("pause the video");
 const Join = new Symbol('join the server session');
 const Ready = new Symbol('indictate the player is ready');
+const Load = new Symbol('load the video');
 const DEBUG = true;
 
 class SocketNotReady extends Exception {
@@ -24,6 +25,36 @@ class SocketNotReady extends Exception {
         break;
       default:
         return `unknown state ${readyState}`
+    }
+  }
+}
+
+class UnknownCommandError extends Exception {
+  constructor(command) {
+    super("recevied unknown command " + command + ".");
+  }
+}
+
+class ServerCommand {
+  constructor(json) {
+    const parsed = JSON.parse(json);
+    for( var prop in parsed ) {
+      if(parsed.hasOwnProperty(prop)) this[prop] = parsed[prop]
+    }
+  }
+  set command(cmd) {
+    switch (cmd) {
+      case "play":
+        this.command = Play;
+        break;
+      case "pause":
+        this.command = Pause;
+        break;
+      case "load":
+        this.command = Load;
+        break;
+      default:
+        throw new UnknownCommandError(cmd)
     }
   }
 }
@@ -99,8 +130,11 @@ class VideoPlayer {
   }
   // Called when a command is received from the server.
   onServerCommand(command) {
-    switch (command.data) {
+    switch (command.data.slice(0, 4)) {
       case "play":
+        if(command.data.size > 4) {
+
+        }
         this.player.play();
         break;
       default:

@@ -9,18 +9,13 @@ module StreamTogether
       end
 
       def command : Command
-        @_command ||= case @command.downcase
-        when "load"
-          ReplyCommands::Load
-        when "pause"
-          ReplyCommands::Pause
-        when "play"
-          ReplyCommands::Play
-        when "give up"
-          ReplyCommands::GiveUp
-        else
-          raise UnknownReplyCommandError.new @command
-        end
+        @_command ||= ReplyCommands.from_s @command
+      end
+
+      def command=(cmd : ReplyCommands)
+        @_command = cmd
+        @command = cmd.to_s
+        self
       end
 
       def self.give_up!(source)
@@ -34,6 +29,9 @@ module StreamTogether
       end
       def self.pause(source, at : Time::Span)
         new("pause", source, at).to_json
+      end
+      def self.acknowledge(source)
+        new("ack", source).to_json
       end
     end
   end

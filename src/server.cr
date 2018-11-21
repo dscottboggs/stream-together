@@ -80,24 +80,25 @@ module StreamTogether
               end
             else
               timeout session
+              session.acknowledge
             end
           end
         when Commands::Play
-          if (sesh = this_session).nil?
+          if sesh = this_session
+            sessions[message.source].each &.load at: message.timestamp
+          else
+            # this_session was nil
             halt context,
                  status_code: 400,
                  response: "must join before playing"
-          elsif sesh.ready?
-
-          else
-
           end
         when Commands::Pause
           halt(
             context,
             status_code: 400,
             response: "must join and be ready to begin playing"
-          ) unless this_session && this_session.ready?
+          ) if this_session.nil?
+          sessions[message.source].each &.pause at: message.timestamp
         else
           raise UnknownCommandError.new message
         end
