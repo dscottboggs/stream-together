@@ -1,5 +1,5 @@
 require "./errors/*"
 
 module StreamTogether
-  class Exception < ::Exception;end
+  class Exception < ::Exception; end
 end

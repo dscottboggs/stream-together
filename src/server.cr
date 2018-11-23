@@ -15,23 +15,26 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 require "kemal"
+require "./server/*"
 
 module StreamTogether
   class Server
-    PWD = "/home/scott/Documents/code/stream_together"
+    PWD            = "/home/scott/Documents/code/stream_together"
     TIMEOUT_PERIOD = 15.seconds
-    property sessions = {} of String => Array(Session)
-    property not_yet_joined = [] of WebSocket
+    property sessions = Hash(String, Array(Session)).new
+    property not_yet_joined = [] of HTTP::WebSocket
     private property flash_messages = [] of String
 
-    def initialize(@ip="0.0.0.0", @port=80, @public_folder = nil)
+    def initialize(@ip = "0.0.0.0", @port = 80, public_folder = nil)
       Kemal.config.host_binding = @ip
       Kemal.config.port = @port
       Kemal.config.public_folder = @public_folder unless @public_folder.nil?
     end
-    def self.serve_up(ip="0.0.0.0", port=80)
+
+    def self.serve_up(ip = "0.0.0.0", port = 80)
       new(ip, port).serve_up
     end
+
     def serve_up
       Kemal.run do
         ws "/" { |sock, ctx| command sock, ctx }
@@ -39,9 +42,11 @@ module StreamTogether
         get "/" { render_page "index.html" }
       end
     end
+
     def port=(@port)
       Kemal.config.port = @port
     end
+
     def ip=(@ip)
       Kemal.config.host_binding = @ip
     end
@@ -70,8 +75,8 @@ module StreamTogether
         when Commands::Ready
           if (sesh = this_session).nil?
             halt context,
-                 status_code: 400,
-                 response: "must join and play before indicating ready"
+              status_code: 400,
+              response: "must join and play before indicating ready"
           else
             sesh.is_ready
             if sessions[message.source].all? &.ready?
@@ -89,8 +94,8 @@ module StreamTogether
           else
             # this_session was nil
             halt context,
-                 status_code: 400,
-                 response: "must join before playing"
+              status_code: 400,
+              response: "must join before playing"
           end
         when Commands::Pause
           halt(
@@ -103,7 +108,6 @@ module StreamTogether
           raise UnknownCommandError.new message
         end
       end
-
     rescue err : UnknownCommandError
       raise if DEBUG
       halt context, status_code: 400, response: "Received unknown command "
