@@ -21,14 +21,19 @@ module StreamTogether
   class Server
     PWD            = "/home/scott/Documents/code/stream_together"
     TIMEOUT_PERIOD = 15.seconds
-    property sessions = Hash(String, Array(Session)).new
-    property not_yet_joined = [] of HTTP::WebSocket
+    @sessions = Hash(String, Array(Session)).new
+
+    property public_folder : String?
+    private property not_yet_joined = [] of HTTP::WebSocket
+    private property sockets = [] of HTTP::WebSocket
     private property flash_messages = [] of String
 
-    def initialize(@ip = "0.0.0.0", @port = 80, public_folder = nil)
+    def initialize(@ip = "0.0.0.0", @port = 80, @public_folder = nil)
       Kemal.config.host_binding = @ip
       Kemal.config.port = @port
-      Kemal.config.public_folder = @public_folder unless @public_folder.nil?
+      if folder = @public_folder
+        Kemal.config.public_folder = folder
+      end
     end
 
     def self.serve_up(ip = "0.0.0.0", port = 80)
@@ -57,13 +62,13 @@ module StreamTogether
       if (url = _url).nil?
         flash "No URL received"
         context.redirect "/"
+      else
+        render "video_page"
       end
     end
 
     # open a command/control environment with the client player
     def command(socket, context)
-      # TODO: implement
-      raise "not yet implemented"
       this_session : Session? = nil
       not_yet_joined << socket
       (sockets << socket).on_message do |msg|

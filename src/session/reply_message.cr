@@ -1,3 +1,5 @@
+require "json"
+
 class StreamTogether::Session
   struct ReplyMessage
     include JSON::Serializable
@@ -13,8 +15,8 @@ class StreamTogether::Session
       new(ReplyCommand::GiveUp, source).to_json
     end
 
-    def self.load(source)
-      new(ReplyCommand::Load, source).to_json
+    def self.load(source, at = nil)
+      new(ReplyCommand::Load, source, timestamp: at).to_json
     end
 
     def self.play(source, at = nil)

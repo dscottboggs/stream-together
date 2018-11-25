@@ -28,12 +28,16 @@ module StreamTogether
     def play
       raise "playing when not ready" unless ready?
       socket.send ReplyMessage.play source
+      @playing = true
+      self
     end
 
     # request
     def play(time)
       raise "playing when not ready" unless ready?
       socket.send ReplyMessage.play(source, at: time)
+      @playing = true
+      self
     end
 
     def play_at(time)
@@ -50,27 +54,29 @@ module StreamTogether
       ready? && !playing?
     end
 
-    @pause_time : Time::Span?
-
-    def pause_at(time)
-      @pause_time = time
-    end
+    getter pause_time : Time::Span?
 
     # buffering has timed out for at least one client, the server is giving up.
     def give_up!
       socket.send ReplyMessage.give_up! source
+      self
     end
 
-    def pause(at : Time::Span? = nil)
-      socket.send ReplyMessage.pause(source, timestamp: at)
+    def pause(at : Time::Span)
+      raise "pausing when not playing" unless playing?
+      @ready = @playing = false
+      socket.send ReplyMessage.pause(source, at: (@pause_time = at))
+      self
     end
 
     def acknowledge
       socket.send ReplyMessage.acknowledge source
+      self
     end
 
     def load(at : Time::Span? = nil)
-      socket.send ReplyMessage.load source, timestamp: at
+      socket.send ReplyMessage.load source, at: at
+      self
     end
   end
 end

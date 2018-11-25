@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
   <%= yield_content "common HTML headers" %>
   <body>
+    <% url = Config::DEFAULT_URL %>
     <%= yield_content "video selection form" %>
   </body>
 </html>

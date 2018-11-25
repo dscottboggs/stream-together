@@ -32,7 +32,7 @@ class StreamTogether::Server
       builder.string(value.to_s)
     end
 
-    def self.from_json(pull)
+    def self.from_json(pull : JSON::PullParser)
       from_s(pull.read_string)
     end
   end

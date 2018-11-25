@@ -1,6 +1,6 @@
 <% content_for "video selection form" do %>
 <form class="watch-link" action="/vid" method="get">
-  <input type="text" name="link" value="">  <!-- TODO default link -->
+  <input type="text" name="link" value="<%=url%>">  <!-- TODO default link -->
   <input class="watch-link submit-button" type="submit" name="sumbit" value="Submit">
 </form>
 <% end %>

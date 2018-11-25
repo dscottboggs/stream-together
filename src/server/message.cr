@@ -1,4 +1,7 @@
 require "json"
+require "./commands"
+require "../core_ext/time/span_converters"
+
 
 # A message received across the WebSocket connection.
 #
@@ -12,7 +15,7 @@ require "json"
 # {
 #   "source": "https://example.com/path/to/video.mp4",
 #   "command": "play",
-#   "payload": < current timestamp >
+#   "timestamp": < current timestamp >
 # }
 # ```
 class StreamTogether::Server
@@ -23,14 +26,8 @@ class StreamTogether::Server
     # The play and pause commands need to send their timestamps
     # to aid in resynchronizing a stream which has potentially fallen out of
     # sync.
-    @[JSON::Field(converter : Time::Span::SecondConverter)]
+    @[JSON::Field(converter: Time::Span::SecondConverter)]
     property timestamp : Time::Span?
-    property? ready = false
-
-    def is_ready
-      ready? = true
-    end
-
     property command : Commands
   end
 end
